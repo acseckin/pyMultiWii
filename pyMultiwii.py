@@ -186,13 +186,30 @@ class MultiWii:
             time.sleep(0.05)
             timer = timer + (time.time() - start)
             start =  time.time()
-    
+    """ Function to set PID coefficients:
+        all coefficients range must be [0-256] so there is a scaling
+        P=Preal*10        Preal ==>[0-20]
+        I=Ireal*1000      Ireal ==>[0-0.250]
+        D=Dreal           Dreal ==> [0-100]
+        
+        after this scaling data must be prepared like this:
+        d1=Proll+256*Iroll
+        d2=Droll+256*Ppitch
+        d3=Ipitch+256*Dpitch
+        d4=Pyaw+256*Iyaw
+        d5=Dyaw+256*Palt
+        d6=Ialt+256*Dalt
+        ....
+        data[d1,d2, d3,d4,d5, .....]
+        Each of these datas are range from 0 to 65792
+    """
     def setPID(self,pd):
-        nd=[]
+        data=[]
         for i in np.arange(1,len(pd),2):
-            nd.append(pd[i]+pd[i+1]*256)
-        data = pd
-        print "PID sending:",data
+            data.append(pd[i]+pd[i+1]*256)
+        for i in range(0,9-len(data)):
+            data=data+[0]
+        #print "PID sending:",data
         self.sendCMD(30,MultiWii.SET_PID,data)
         self.sendCMD(0,MultiWii.EEPROM_WRITE,[])
 
